@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Assignment 3: Object Blurring</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background-color: #f4f4f9; padding: 20px; }
+        h1 { color: #333; }
+        .container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-top: 30px; }
+        .image-box { 
+            background: white; padding: 15px; border-radius: 10px; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
+        }
+        img { max-width: 500px; width: 100%; height: auto; border-radius: 5px; }
+        
+        input[type="submit"] {
+            background-color: #d9534f; color: white; padding: 15px 30px;
+            border: none; border-radius: 5px; cursor: pointer; font-size: 18px; font-weight: bold;
+            transition: background 0.3s;
+        }
+        input[type="submit"]:hover { background-color: #c9302c; }
+    </style>
+</head>
+<body>
+
+    <h1>Object Blurring System</h1>
+      <p><a href="https://drive.google.com/file/d/1olSb93fOnxELqWOwmrZbFJUsE6ZnT0rl/view?usp=sharing" target="_blank" style="color: blue; font-weight: bold; font-size: 18px;">🎥 Watch Video Demo for this Module</a></p>
+
+    <p>Click button to detect the objects in the scene and <b>blur</b> them.</p>
+
+    <form action="{{ url_for('index') }}" method="POST">
+        <input type="submit" value="Blur Objects">
+    </form>
+
+    <div class="container">
+        {% if original %}
+        <div class="image-box">
+            <h3>Original Scene</h3>
+            <img src="{{ original }}" alt="Original">
+        </div>
+        {% endif %}
+        
+        {% if processed %}
+        <div class="image-box">
+            <h3>Processed (Blurred)</h3>
+            <img src="{{ processed }}" alt="Processed">
+        </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>

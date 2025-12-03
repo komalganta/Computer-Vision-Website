@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Assignment 7 Calibrated Stereo and Pose Tracking</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background-color: #f8f9fa; padding: 20px; }
+        
+        .nav { margin-bottom: 25px; }
+        .nav button {
+            padding: 12px 24px; font-size: 16px; cursor: pointer;
+            background: #e9ecef; border: none; margin: 0 5px; border-radius: 5px;
+        }
+        .nav button.active { background: #007bff; color: white; }
+        .section { display: none; }
+        .section.active { display: block; }
+        .container { display: flex; justify-content: center; gap: 15px; margin-top: 20px; }
+        .img-box { border: 3px solid #333; position: relative; }
+        img.stereo-img { max-width: 45vw; display: block; cursor: crosshair; }
+        .dot { 
+            position: absolute; width: 10px; height: 10px; 
+            background: red; border-radius: 50%; 
+            transform: translate(-50%, -50%); pointer-events: none;
+        }
+        #status { 
+            background: #e2e3e5; padding: 15px; border-radius: 8px; 
+            display: inline-block; font-weight: bold; width: 80%;
+        }
+        .video-container { 
+            margin-top: 20px; border: 5px solid #333; display: inline-block; 
+            background: #000; min-width: 640px; min-height: 480px;
+        }
+        .download-btn {
+            display: block; margin: 25px auto; padding: 15px 30px;
+            background-color: #28a745; color: white; text-decoration: none;
+            font-size: 18px; border-radius: 5px; width: 220px; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Assignment 7</h1>
+    <p><a href="https://drive.google.com/file/d/1ujXM9udNZtxahoMDZvdkHPqzFOL4DIff/view?usp=sharing" target="_blank" style="color: blue; font-weight: bold; font-size: 18px;">🎥 Watch Video Demo for this Module</a></p>
+
+    <div class="nav">
+        <button onclick="switchTab('stereo')" id="btn-stereo" class="active">Part 1: Uncalibrated Steror Vision</button>
+        <button onclick="switchTab('pose')" id="btn-pose">Pose Tracking</button>
+    </div>
+
+    <div id="stereo" class="section active">
+        <h2>Object Size Estimation</h2>
+        <div id="status">Step 1: Click <b>CENTER</b> of box in <b>LEFT Image</b>.</div>
+        <div id="results" style="margin-top:15px; color:blue; font-weight:bold; font-size:1.2em;"></div>
+
+        <div class="container">
+            <div class="img-box" id="box-left">
+                <h3>Left Eye</h3>
+                <img id="img-left" class="stereo-img" src="{{ url_for('static', filename='left_img.jpg') }}">
+            </div>
+            <div class="img-box" id="box-right">
+                <h3>Right Eye</h3>
+                <img id="img-right" class="stereo-img" src="{{ url_for('static', filename='right_img.jpg') }}">
+            </div>
+        </div>
+        <button onclick="location.reload()" style="margin-top:20px; padding:10px 20px; cursor:pointer;">Reset Stereo</button>
+    </div>
+
+    <div id="pose" class="section">
+        <h2>Real-Time Pose & Hand Tracking</h2>
+        <p>The system is recording your pose data to CSV in the background.</p>
+        
+        <div class="video-container">
+            <img id="video-feed" width="640" height="480">
+        </div>
+
+        <a href="{{ url_for('download_csv') }}" class="download-btn">Download CSV Data</a>
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav button').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.getElementById('btn-' + tabId).classList.add('active');
+
+            const videoImg = document.getElementById('video-feed');
+            if (tabId === 'pose') {
+                videoImg.src = "{{ url_for('video_feed') }}";
+            } else {
+                videoImg.src = "";
+            }
+        }
+
+        async function postData(url, data) {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(`Server Error (${response.status}): ${text.substring(0, 100)}`);
+            }
+            return response.json();
+        }
+
+        let step = 1; 
+        let pLeft = null, pRight = null;
+        let p1 = null, p2 = null;
+        let finalZ = 0;
+        let imgWidth = 0, imgHeight = 0;
+
+        const imgL = document.getElementById('img-left');
+        const imgR = document.getElementById('img-right');
+        const statusDiv = document.getElementById('status');
+        const resDiv = document.getElementById('results');
+
+        function getCoords(e, img) {
+            const rect = img.getBoundingClientRect();
+            imgWidth = img.naturalWidth;
+            imgHeight = img.naturalHeight;
+            const scaleX = img.naturalWidth / rect.width;
+            const scaleY = img.naturalHeight / rect.height;
+            return {
+                x: (e.clientX - rect.left) * scaleX,
+                y: (e.clientY - rect.top) * scaleY,
+                cssX: e.clientX - rect.left,
+                cssY: e.clientY - rect.top
+            };
+        }
+
+        function drawDot(x, y, parent) {
+            let d = document.createElement('div');
+            d.className = 'dot';
+            d.style.left = x + 'px';
+            d.style.top = y + 'px';
+            parent.appendChild(d);
+        }
+        imgL.addEventListener('click', (e) => {
+            let c = getCoords(e, imgL);
+            if (step === 1) { 
+                pLeft = c; drawDot(c.cssX, c.cssY, document.getElementById('box-left'));
+                statusDiv.innerHTML = "Step 2: Click <b>CENTER</b> in <b>RIGHT Image</b>."; step = 2;
+            } 
+            else if (step === 3) { 
+                p1 = c; drawDot(c.cssX, c.cssY, document.getElementById('box-left'));
+                statusDiv.innerHTML = "Step 4: Click <b>OTHER SIDE</b> (Width)."; step = 4;
+            } 
+            else if (step === 4) { 
+                p2 = c; drawDot(c.cssX, c.cssY, document.getElementById('box-left'));
+                postData("{{ url_for('calculate_dist') }}", { p1: p1, p2: p2, Z: finalZ, img_w: imgWidth, img_h: imgHeight })
+                .then(data => {
+                    resDiv.innerHTML += `Width: ${data.dist_cm} cm <br>`;
+                    statusDiv.innerHTML = "Step 5: Click <b>TOP EDGE</b> (Height)."; step = 5;
+                }).catch(e => alert(e));
+            } 
+            else if (step === 5) { 
+                p1 = c; drawDot(c.cssX, c.cssY, document.getElementById('box-left'));
+                statusDiv.innerHTML = "Step 6: Click <b>BOTTOM EDGE</b>."; step = 6;
+            } 
+            else if (step === 6) { 
+                p2 = c; drawDot(c.cssX, c.cssY, document.getElementById('box-left'));
+                postData("{{ url_for('calculate_dist') }}", { p1: p1, p2: p2, Z: finalZ, img_w: imgWidth, img_h: imgHeight })
+                .then(data => {
+                    resDiv.innerHTML += `Height: ${data.dist_cm} cm <br>`;
+                    statusDiv.innerHTML = "<b>Measurement Complete!</b>"; step = 7;
+                }).catch(e => alert(e));
+            }
+        });
+
+        imgR.addEventListener('click', (e) => {
+            if (step === 2) {
+                let c = getCoords(e, imgR);
+                pRight = c; drawDot(c.cssX, c.cssY, document.getElementById('box-right'));
+                postData("{{ url_for('calculate_stereo') }}", { p_left: pLeft, p_right: pRight, img_w: imgWidth, img_h: imgHeight })
+                .then(data => {
+                    if(data.error) { alert(data.error); location.reload(); return; }
+                    finalZ = data.Z;
+                    resDiv.innerHTML = `Calculated Depth (Z): ${finalZ} cm <hr>`;
+                    statusDiv.innerHTML = "Step 3: Click <b>LEFT EDGE</b> in <b>LEFT Image</b> (Width)."; step = 3;
+                }).catch(e => alert(e));
+            }
+        });
+    </script>
+</body>
+</html>

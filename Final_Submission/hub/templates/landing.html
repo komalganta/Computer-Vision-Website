@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Computer Vision Portfolio</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: #eee; margin: 0; text-align: center; }
+        header { background: linear-gradient(135deg, #0d6efd, #0043a8); padding: 40px 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        h1 { margin: 0; font-size: 2.5em; letter-spacing: 1px; }
+        p.subtitle { margin-top: 10px; font-size: 1.2em; opacity: 0.8; }
+        
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 12px;
+            padding: 25px;
+            transition: transform 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .card:hover { transform: translateY(-5px); border-color: #0d6efd; }
+        
+        .card h2 { color: #0d6efd; margin-top: 0; font-size: 1.5em; }
+        .card p { color: #ccc; line-height: 1.5; }
+        .tag { display: inline-block; background: #333; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; margin: 2px; }
+        
+        .btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 20px;
+            background: #0d6efd;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: #0b5ed7; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Computer Vision Portfolio</h1>
+        <p class="subtitle">Modules 1-7</p>
+    </header>
+
+    <div class="grid-container">
+        
+        <div class="card">
+            <div>
+                <h2>Module 1</h2>
+                <p><strong>Measurement & Projection</strong><br>
+                Calculate real-world dimensions using perspective projection and camera intrinsics.</p>
+            </div>
+            <a href="/module1/" class="btn">Launch Module 1</a>
+        </div>
+
+        <div class="card">
+            <div>
+                <h2>Module 2</h2>
+                <p><strong>Filters & Matching</strong><br>
+                Object detection via Template Matching and image restoration using Fourier Transforms.</p>
+            </div>
+            <a href="/module2/" class="btn">Launch Module 2</a>
+        </div>
+
+        <div class="card">
+            <div>
+                <h2>Module 3</h2>
+                <p><strong>Features & Segmentation</strong><br>
+                Edge/Corner detection and ArUco marker-based object segmentation.</p>
+            </div>
+            <a href="/module3/" class="btn">Launch Module 3</a>
+        </div>
+
+        <div class="card">
+            <div>
+                <h2>Module 4</h2>
+                <p><strong>Stitching & SIFT</strong><br>
+                Panorama image stitching and custom SIFT feature extraction implementation.</p>
+            </div>
+            <a href="/module4/" class="btn">Launch Module 4</a>
+        </div>
+
+        <div class="card">
+            <div>
+                <h2>Module 5-6</h2>
+                <p><strong>Object Tracking</strong><br>
+                Real-time tracking comparison: ArUco Markers vs. CSRT (Markerless) vs. SAM2.</p>
+            </div>
+            <a href="/module6/" class="btn">Launch Module 6</a>
+        </div>
+
+        <div class="card">
+            <div>
+                <h2>Module 7</h2>
+                <p><strong>Stereo & Pose</strong><br>
+                Calibrated stereo vision for depth estimation and MediaPipe pose tracking.</p>
+            </div>
+            <a href="/module7/" class="btn">Launch Module 7</a>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Assignment 4: Image Stitching and Sift</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .source-thumb { width: 100px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; margin-right: 5px;}
+        .result-box { border: 2px dashed #ddd; padding: 20px; text-align: center; margin-top: 20px; border-radius: 10px; min-height: 200px;}
+        .result-img { max-width: 100%; height: auto; border-radius: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-action { width: 200px; margin-top: 20px; }
+        .loader { display: none; color: #0d6efd; font-weight: bold; margin: 10px 0; }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container py-5">
+    <h1 class="mb-2">Assignment 4</h1>
+    <p><a href="https://drive.google.com/file/d/1aiFDs81NQc0SEj7a9su5wIKHq-lD7-VD/view?usp=sharing" target="_blank" style="color: blue; font-weight: bold; font-size: 18px;">🎥 Watch Video Demo for this Module</a></p>
+
+    <p class="text-muted mb-4">Image Stitching and SIFT</p>
+
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#part1">Part 1: Stitching</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#part2">Part 2: SIFT</button></li>
+    </ul>
+
+    <div class="tab-content p-4 bg-white border border-top-0 rounded-bottom shadow-sm">
+        
+        <div class="tab-pane fade show active" id="part1">
+            <h4>Image Stitching (Panorama)</h4>
+            <p>images loaded from server:</p>
+            <div class="d-flex mb-3">
+                <img src="/static/images/1.jpg" class="source-thumb">
+                <img src="/static/images/2.jpg" class="source-thumb">
+                <img src="/static/images/3.jpg" class="source-thumb">
+                <img src="/static/images/4.jpg" class="source-thumb">
+            </div>
+
+            <button id="btnStitch" class="btn btn-primary btn-action">Generate Panorama</button>
+            <div id="loader1" class="loader">Processing 4 images...</div>
+
+            <div id="resStitch" class="row mt-4" style="display:none;">
+                <div class="col-12 mb-4">
+                    <h5>My Result</h5>
+                    <img id="imgStitch" class="result-img" src="">
+                </div>
+                <div class="col-12">
+                    <h5>Reference</h5>
+                    <img id="imgPhone" class="result-img" src="">
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="part2">
+            <h4>SIFT</h4>
+            <p>Comparing my implementation and OpenCV using <b>2.jpg</b>.</p>
+            <div class="mb-3">
+                 <img src="/static/images/2.jpg" class="source-thumb" style="width: 200px; height: auto;">
+            </div>
+
+            <button id="btnSift" class="btn btn-success btn-action">Run SIFT Analysis</button>
+            <div id="loader2" class="loader">Calculating Difference of Gaussians...</div>
+
+            <div id="resSift" class="row mt-4" style="display:none;">
+                <div class="col-md-6">
+                    <h5>My Implementation</h5>
+                    <img id="imgSiftScratch" class="result-img" src="">
+                    <div class="mt-2 badge bg-success fs-6">Keypoints: <span id="countScratch">0</span></div>
+                </div>
+                <div class="col-md-6">
+                    <h5>OpenCV Implementation</h5>
+                    <img id="imgSiftCV" class="result-img" src="">
+                    <div class="mt-2 badge bg-danger fs-6">Keypoints: <span id="countCV">0</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    //stitching
+    document.getElementById('btnStitch').addEventListener('click', async () => {
+        document.getElementById('loader1').style.display = 'block';
+        document.getElementById('resStitch').style.display = 'none';
+        
+        try {
+            const res = await fetch("{{ url_for('run_stitch') }}", { method: 'POST' });
+            const data = await res.json();
+            
+            if(data.success) {
+                document.getElementById('imgStitch').src = 'data:image/jpeg;base64,' + data.pano_image;
+                document.getElementById('imgPhone').src = 'data:image/jpeg;base64,' + data.phone_image;
+                document.getElementById('resStitch').style.display = 'flex';
+            } else {
+                alert("Error: " + data.error);
+            }
+        } catch (e) { alert("Server error"); }
+        document.getElementById('loader1').style.display = 'none';
+    });
+
+    // sift
+    document.getElementById('btnSift').addEventListener('click', async () => {
+        document.getElementById('loader2').style.display = 'block';
+        document.getElementById('resSift').style.display = 'none';
+        
+        try {
+            const res = await fetch("{{ url_for('run_sift') }}", { method: 'POST' });
+            const data = await res.json();
+            
+            if(data.success) {
+                document.getElementById('imgSiftScratch').src = 'data:image/jpeg;base64,' + data.scratch_img;
+                document.getElementById('imgSiftCV').src = 'data:image/jpeg;base64,' + data.cv_img;
+                document.getElementById('countScratch').innerText = data.scratch_count;
+                document.getElementById('countCV').innerText = data.cv_count;
+                document.getElementById('resSift').style.display = 'flex';
+            } else {
+                alert("Error: " + data.error);
+            }
+        } catch (e) { alert("Server error"); }
+        document.getElementById('loader2').style.display = 'none';
+    });
+</script>
+</body>
+</html>

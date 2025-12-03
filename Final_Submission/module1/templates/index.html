@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Assignment 1: Object Dimension Measurement</title>
+  <style>
+    body { 
+        text-align: center; 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        background-color: #f4f4f9;
+        padding: 20px;
+    }
+    h1 { color: #333; }
+    #container { 
+        position: relative; 
+        display: inline-block; 
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    img { 
+        max-width: 80vw;
+        display: block;
+        cursor: crosshair;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ff0000;
+      border: 2px solid #fff;
+      position: absolute;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 10;
+    }
+    #result { 
+        margin-top: 20px; 
+        font-size: 20px; 
+        font-weight: bold; 
+        color: #0056b3; 
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        display: inline-block;
+        min-width: 300px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Dimension Measurement</h1>
+  <p><a href="https://drive.google.com/file/d/1F5R9gHpxpfhkxkUb0B4xSc3byiD0ZWXL/view?usp=sharing" target="_blank" style="color: blue; font-weight: bold; font-size: 18px;">🎥 Watch Video Demo for this Module</a></p>
+  <p>Click two points on the object to measure its real-world size.</p>
+
+  <div id="container">
+    <img id="image" src="{{ url_for('static', filename='rubixcube1.jpg') }}" alt="Test Subject">
+  </div>
+
+  <br>
+  <div id="result">Waiting for input...</div>
+
+  <script>
+    const img = document.getElementById("image");
+    const resultDiv = document.getElementById("result");
+    const container = document.getElementById("container");
+    let points = [];
+
+    img.addEventListener("click", (e) => {
+      const rect = img.getBoundingClientRect();
+      const offsetX = e.clientX - rect.left;
+      const offsetY = e.clientY - rect.top;
+      const scaleX = img.naturalWidth / rect.width;
+      const scaleY = img.naturalHeight / rect.height;
+
+      const imgX = Math.round(offsetX * scaleX);
+      const imgY = Math.round(offsetY * scaleY);
+
+      points.push({ x: imgX, y: imgY });
+
+      const dot = document.createElement("div");
+      dot.classList.add("dot");
+      dot.style.left = `${offsetX}px`;
+      dot.style.top = `${offsetY}px`;
+      container.appendChild(dot);
+
+      if (points.length === 1) {
+        resultDiv.innerHTML = `Point 1 selected: (${imgX}, ${imgY})<br>Click second point...`;
+      } else if (points.length === 2) {
+        const p1 = points[0];
+        const p2 = points[1];
+        
+        resultDiv.innerHTML = "Calculating...";
+
+        fetch("{{ url_for('calculate') }}", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ p1, p2 })
+        })
+        .then(res => res.json())
+        .then(result => {
+          resultDiv.innerHTML = `
+            <span style="color: #333">Points: (${p1.x},${p1.y}) to (${p2.x},${p2.y})</span><br>
+            <hr style="margin: 10px 0; border: 0; border-top: 1px solid #ccc;">
+            Real-World Width: ${result.dX} cm<br>
+            Real-World Height: ${result.dY} cm<br>
+            <span style="color: green; font-size: 1.2em;">Total Distance: ${result.distance} cm</span>
+          `;
+        })
+        .catch(err => {
+          resultDiv.innerHTML = "Error connecting to server.";
+          console.error(err);
+        });
+
+        points = []; 
+        setTimeout(() => {
+            document.querySelectorAll('.dot').forEach(el => el.remove());
+            if(resultDiv.innerText === "Calculating...") resultDiv.innerText = "Ready for new measurement.";
+        }, 5000); 
+      }
+    });
+  </script>
+</body>
+</html>
