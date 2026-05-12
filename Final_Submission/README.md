@@ -14,7 +14,6 @@ This repository contains the complete code for Assignments 1 through 7, combined
 ## How to Run
 1. **Install Dependencies:**
    Ensure you have the required libraries installed:
-   ```bash
 2. pip install flask opencv-python numpy mediapipe matplotlib
 3. python run_hub.py
 4. Open http://localhost:5050/
